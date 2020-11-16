@@ -1,5 +1,5 @@
 # Dask-Mosaic
-Create lazy reads and alignment of a mosaic of rasters.
+Create lazy reads and alignment of a mosaic of rasters
 
 ## Background
 Leveraging the power of dask and lazily reading raster data is an effective way of managing memory and taking advantage of parallelism. This can be done easily using `xarray`, `rasterio`, and `dask`, although this only works with a single raster
