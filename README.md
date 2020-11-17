@@ -45,8 +45,10 @@ dask.array<array, shape=(1, 11800, 9981), dtype=float32, chunksize=(1, 1024, 102
 
 # Another method to create a dask array directly is the preferred option
 data = daskaic.open_dask(rasters)
+
 data
 dask.array<masked_equal, shape=(1, 11800, 9981), dtype=float32, chunksize=(1, 1024, 1024), chunktype=numpy.MaskedArray>
+
 # This method also masks the array where there are no data, which is helpful for numpy operations that support masked arrays
 da.compute(data.min(), data.max(), data.mean(), data.sum(), data.var(), data.std())
 (7.5, 185.2, 28.82051, 1043275500.0, 224.68655, 14.989548)
