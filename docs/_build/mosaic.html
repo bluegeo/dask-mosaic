@@ -1,0 +1,271 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- Licensed under the Apache 2.0 License -->
+  <link rel="stylesheet" type="text/css" href="_static/fonts/open-sans/stylesheet.css" />
+  <!-- Licensed under the SIL Open Font License -->
+  <link rel="stylesheet" type="text/css" href="_static/fonts/source-serif-pro/source-serif-pro.css" />
+  <link rel="stylesheet" type="text/css" href="_static/css/bootstrap.min.css" />
+  <link rel="stylesheet" type="text/css" href="_static/css/bootstrap-theme.min.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+    <title>Mosaic &#8212; Dask Mosaic 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/guzzle.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Dask Mosaic" href="index.html" />
+  
+   
+
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="index.html" title="Dask Mosaic"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Dask Mosaic 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Mosaic</a></li> 
+      </ul>
+    </div>
+    <div class="container-wrapper">
+
+      <div id="mobile-toggle">
+        <a href="#"><span class="glyphicon glyphicon-align-justify" aria-hidden="true"></span></a>
+      </div>
+  <div id="left-column">
+    <div class="sphinxsidebar"><a href="
+    index.html" class="text-logo">Dask Mosaic 0.1 documentation</a>
+<div class="sidebar-block">
+  <div class="sidebar-wrapper">
+    <h2>Table Of Contents</h2>
+  </div>
+  <div class="sidebar-toc">
+    
+    
+      <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Mosaic</a></li>
+</ul>
+
+    
+  </div>
+</div>
+<div class="sidebar-block">
+  <div class="sidebar-wrapper">
+    <div id="main-search">
+      <form class="form-inline" action="search.html" method="GET" role="form">
+        <div class="input-group">
+          <input name="q" type="text" class="form-control" placeholder="Search...">
+        </div>
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+        <div id="right-column">
+          
+          <div role="navigation" aria-label="breadcrumbs navigation">
+            <ol class="breadcrumb">
+              <li><a href="index.html">Docs</a></li>
+              
+              <li>Mosaic</li>
+            </ol>
+          </div>
+          
+          <div class="document clearer body">
+            
+  <div class="section" id="mosaic">
+<span id="id1"></span><h1>Mosaic<a class="headerlink" href="#mosaic" title="Permalink to this headline">¶</a></h1>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#daskaic.Mosaic" title="daskaic.Mosaic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Mosaic</span></code></a>(rasters, **kwargs)</p></td>
+<td><p>A collection of rasters with a single defined spatial reference and discretization</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#daskaic.open_mosaic" title="daskaic.open_mosaic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">open_mosaic</span></code></a>(rasters, **kwargs)</p></td>
+<td><p>API for Mosaic- open a mosaic of rasters</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#daskaic.open_dask" title="daskaic.open_dask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">open_dask</span></code></a>(rasters, **kwargs)</p></td>
+<td><p>Open a mosaic of rasters as a dask array to enable numpy-like syntax and methods.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt id="daskaic.Mosaic">
+<em class="property">class </em><code class="sig-prename descclassname">daskaic.</code><code class="sig-name descname">Mosaic</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rasters</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#daskaic.Mosaic" title="Permalink to this definition">¶</a></dt>
+<dd><p>A collection of rasters with a single defined spatial reference and discretization</p>
+<p>Creating a mosaic requires an iterable of GDAL-supported raster data sources. The spatial definition of the
+mosaic will be inferred if no kwargs are provided.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>list</em>) – An iterable with paths to raster data</p>
+</dd>
+<dt class="field-even">Keyword Arguments</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>extent</strong> (<em>tuple</em>) – </dt><dd><p>Bounding extent of the mosaic in the target spatial reference. Order: (top, bottom, left, right)
+Defaults to <code class="docutils literal notranslate"><span class="pre">'union'</span></code>, which is the bounds of all input rasters</p>
+</dd>
+<dt><strong>chunks</strong> (<em>int</em> or <em>dict</em>) – </dt><dd><p>Chunks used for mapped data access by dask. Specify explictly using a dict in the form
+{‘bands’: &lt;number of bands&gt;, ‘x’: &lt;chunks in the x-direction&gt;, ‘y’: &lt;chunks in the y-direction&gt;}.
+Otherwise, specify a block size multiplier for the raster with the smallest block size. Defaults to <code class="docutils literal notranslate"><span class="pre">2</span></code>.</p>
+</dd>
+<dt><strong>band_alignment</strong> (<em>str</em> or <em>dict</em>) – </dt><dd><p>Method to align, or reduce raster bands during data access. This may be a dict in the form:
+{1: [&lt;raster 1 band&gt;, &lt;raster 2 band&gt;], 2: [&lt;raster 1 band&gt;, &lt;raster 2 band&gt;]}, where the
+keys are the output bands (z-dimensions) when data are read, and the values are lists with exactly
+the same length as the rasters in the mosaic with band numbers mapped in order.
+This argument may also be the value <code class="docutils literal notranslate"><span class="pre">'number'</span></code>, which means all band numbers from all rasters will
+align by index.</p>
+</dd>
+<dt><strong>dtype</strong> (<em>str</em>) – </dt><dd><p>The numpy-like data type of output data when read. See <code class="docutils literal notranslate"><span class="pre">numpy.dtype</span></code>. Defaults to the highest 
+precision of all input rasters, prioritizing floating point numbers over integers.</p>
+</dd>
+<dt><strong>resample_algs</strong> (<em>list</em>) – </dt><dd><p>An iterable of GDAL resample algorithms that is exactly the same length as the number of input rasters.
+See <code class="docutils literal notranslate"><span class="pre">Mosaic.gdal_resample_methods</span></code> for a list.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'near'</span></code> for integer rasters and <code class="docutils literal notranslate"><span class="pre">'bilinear'</span></code> for floating point rasters.</p>
+</dd>
+<dt><strong>merge_method</strong> (<em>str</em>) – </dt><dd><p>The method used to merge data from different rasters when their band alignment intersects. Use one of 
+the methods specified in <code class="docutils literal notranslate"><span class="pre">Mosaic.merge_methods</span></code>
+Defaults to <code class="docutils literal notranslate"><span class="pre">'last'</span></code>, which uses the value of the last raster in the input list</p>
+</dd>
+<dt><strong>sr</strong> (<em>int</em> or <em>str</em>) – </dt><dd><p>Spatial reference to use to align all rasters in the mosaic. Use a format compatible with 
+<code class="docutils literal notranslate"><span class="pre">pyproj.CRS.from_user_input</span></code>, or one of <code class="docutils literal notranslate"><span class="pre">'first'</span></code> or <code class="docutils literal notranslate"><span class="pre">'last'</span></code>, where either the spatial 
+reference from the first or last raster in the list is used. 
+Defaults to <code class="docutils literal notranslate"><span class="pre">'first'</span></code></p>
+</dd>
+<dt><strong>csx</strong> (<em>str</em> or <em>float</em>) – </dt><dd><p>Input cell size in the x-direction. Use one of <code class="docutils literal notranslate"><span class="pre">'smallest'</span></code>, <code class="docutils literal notranslate"><span class="pre">'largest'</span></code>, <code class="docutils literal notranslate"><span class="pre">'average'</span></code> or the
+exact cell size. Defaults to <code class="docutils literal notranslate"><span class="pre">'smallest'</span></code>, which is the smallest of all rasters (transformed to 
+distance units of the mosaic coordinate system).</p>
+</dd>
+<dt><strong>csy</strong> (<em>float</em>) – </dt><dd><p>Input cell size in the y-direction. Use one of <code class="docutils literal notranslate"><span class="pre">'smallest'</span></code>, <code class="docutils literal notranslate"><span class="pre">'largest'</span></code>, <code class="docutils literal notranslate"><span class="pre">'average'</span></code> or the
+exact cell size. Defaults to <code class="docutils literal notranslate"><span class="pre">'smallest'</span></code>, which is the smallest of all rasters (transformed to 
+distance units of the mosaic coordinate system).</p>
+</dd>
+<dt><strong>nodata</strong> (<em>int</em> or <em>float</em>) – </dt><dd><p>Value of null or no data in output arrays when collecting data.
+Defaults to an inferred maximum or minimum possible value using the data type of the mosaic.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="daskaic.Mosaic.slice">
+<code class="sig-name descname">slice</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">extent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#daskaic.Mosaic.slice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collect a dask array of an extent within the mosaic.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the extent does not line up with the cell edges exactly, the extent of resulting data are 
+snapped to a greater window matching the mosaic cell size.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>extent</strong> (<em>tuple</em>) – Extent coordinates in the form (top, bottom, left, right)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Dask array of sliced data from the mosaic</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="daskaic.open_mosaic">
+<code class="sig-prename descclassname">daskaic.</code><code class="sig-name descname">open_mosaic</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rasters</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#daskaic.open_mosaic" title="Permalink to this definition">¶</a></dt>
+<dd><p>API for Mosaic- open a mosaic of rasters</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">daskaic</span> <span class="kn">import</span> <span class="n">open_mosaic</span>
+
+
+<span class="n">rasters</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;rasters_1.tif&#39;</span><span class="p">,</span> <span class="s1">&#39;raster_2.tif&#39;</span><span class="p">,</span> <span class="s1">&#39;raster_3.tif&#39;</span><span class="p">]</span>
+<span class="n">mosaic</span> <span class="o">=</span> <span class="n">open_mosaic</span><span class="p">(</span><span class="n">rasters</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Alternatively, add some specs to the mosaic, using parameters specified in <a class="reference internal" href="#daskaic.Mosaic" title="daskaic.Mosaic"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mosaic</span></code></a>
+.. highlight:: python
+.. code-block:: python</p>
+<blockquote>
+<div><p>mosaic = open_mosaic(rasters, sr=4326, merge_method=’average’, chunks={‘bands’: 1, ‘x’: 1024, ‘y’: 1024})</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt id="daskaic.open_dask">
+<code class="sig-prename descclassname">daskaic.</code><code class="sig-name descname">open_dask</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rasters</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#daskaic.open_dask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open a mosaic of rasters as a dask array to enable numpy-like syntax and methods. A masked array is returned,
+which will avoid use of no data values when supported operations are used.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Always check which masked operations are supported to avoid erroneous results that include no data values</p>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">daskaic</span> <span class="kn">import</span> <span class="n">open_dask</span>
+<span class="kn">import</span> <span class="nn">dask.array</span> <span class="k">as</span> <span class="nn">da</span>
+
+
+<span class="n">rasters</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;rasters_1.tif&#39;</span><span class="p">,</span> <span class="s1">&#39;raster_2.tif&#39;</span><span class="p">,</span> <span class="s1">&#39;raster_3.tif&#39;</span><span class="p">]</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">open_dask</span><span class="p">(</span><span class="n">rasters</span><span class="p">)</span>
+
+<span class="n">b</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+
+
+          </div>
+            
+  <div class="footer-relations">
+    
+      <div class="pull-left">
+        <a class="btn btn-default" href="index.html" title="previous chapter (use the left arrow)">Dask Mosaic</a>
+      </div>
+    
+    </div>
+    <div class="clearer"></div>
+  
+        </div>
+        <div class="clearfix"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="index.html" title="Dask Mosaic"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Dask Mosaic 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Mosaic</a></li> 
+      </ul>
+    </div>
+<script type="text/javascript">
+  $("#mobile-toggle a").click(function () {
+    $("#left-column").toggle();
+  });
+</script>
+<script type="text/javascript" src="_static/js/bootstrap.js"></script>
+  <div class="footer">
+    &copy; Copyright 2020, Devin Cairns. Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+  </div>
+  </body>
+</html>

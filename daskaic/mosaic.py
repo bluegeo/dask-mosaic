@@ -6,7 +6,9 @@ from .util import compare_projections, transform_extent, get_user_sr, get_highes
 
 
 class Mosaic(object):
-
+    """
+    A collection of rasters with a single defined spatial reference and discretization
+    """
     gdal_resample_methods = [
         'near', 'bilinear', 'cubic', 'cubicspline', 'lanczos', 'average',
         'mode', 'max', 'min', 'med', 'q1', 'q3', 'sum', 'proportion'
@@ -17,6 +19,58 @@ class Mosaic(object):
     ]
 
     def __init__(self, rasters, **kwargs):
+        """
+        Creating a mosaic requires an iterable of GDAL-supported raster data sources. The spatial definition of the
+        mosaic will be inferred if no kwargs are provided.
+
+        :param list path: An iterable with paths to raster data
+
+        :Keyword Arguments:
+            **extent** (*tuple*) -- 
+                Bounding extent of the mosaic in the target spatial reference. Order: (top, bottom, left, right)
+                Defaults to ``'union'``, which is the bounds of all input rasters
+            **chunks** (*int* or *dict*) -- 
+                Chunks used for mapped data access by dask. Specify explictly using a dict in the form
+                {'bands': <number of bands>, 'x': <chunks in the x-direction>, 'y': <chunks in the y-direction>}.
+                Otherwise, specify a block size multiplier for the raster with the smallest block size. Defaults to ``2``.
+            **band_alignment** (*str* or *dict*) -- 
+                Method to align, or reduce raster bands during data access. This may be a dict in the form:
+                {1: [<raster 1 band>, <raster 2 band>], 2: [<raster 1 band>, <raster 2 band>]}, where the
+                keys are the output bands (z-dimensions) when data are read, and the values are lists with exactly
+                the same length as the rasters in the mosaic with band numbers mapped in order.
+                This argument may also be the value ``'number'``, which means all band numbers from all rasters will
+                align by index.
+            **dtype** (*str*) -- 
+                The numpy-like data type of output data when read. See ``numpy.dtype``. Defaults to the highest 
+                precision of all input rasters, prioritizing floating point numbers over integers.
+            **resample_algs** (*list*) -- 
+                An iterable of GDAL resample algorithms that is exactly the same length as the number of input rasters.
+                See ``Mosaic.gdal_resample_methods`` for a list.
+                Defaults to ``'near'`` for integer rasters and ``'bilinear'`` for floating point rasters.
+            **merge_method** (*str*) -- 
+                The method used to merge data from different rasters when their band alignment intersects. Use one of 
+                the methods specified in ``Mosaic.merge_methods``
+                Defaults to ``'last'``, which uses the value of the last raster in the input list
+            **sr** (*int* or *str*) -- 
+                Spatial reference to use to align all rasters in the mosaic. Use a format compatible with 
+                ``pyproj.CRS.from_user_input``, or one of ``'first'`` or ``'last'``, where either the spatial 
+                reference from the first or last raster in the list is used. 
+                Defaults to ``'first'``
+            **csx** (*str* or *float*) -- 
+                Input cell size in the x-direction. Use one of ``'smallest'``, ``'largest'``, ``'average'`` or the
+                exact cell size. Defaults to ``'smallest'``, which is the smallest of all rasters (transformed to 
+                distance units of the mosaic coordinate system).
+            **csy** (*float*) -- 
+                Input cell size in the y-direction. Use one of ``'smallest'``, ``'largest'``, ``'average'`` or the
+                exact cell size. Defaults to ``'smallest'``, which is the smallest of all rasters (transformed to 
+                distance units of the mosaic coordinate system).
+            **nodata** (*int* or *float*) -- 
+                Value of null or no data in output arrays when collecting data.
+                Defaults to an inferred maximum or minimum possible value using the data type of the mosaic.
+        """
+        if isinstance(rasters, str):
+            # Maybe a single dataset path?
+            rasters = [rasters]
         if len(rasters) == 0:
             raise ValueError('A Mosaic requires one or more rasters')
 
@@ -378,7 +432,7 @@ class Mosaic(object):
                     output[band, ...][in_mask] = a[in_mask]
                 elif self.merge_method == 'first':
                     m = (output[band, ...] == self.nodata) & in_mask
-                    output[band, ...][m] = a[m] 
+                    output[band, ...][m] = a[m]
                 elif self.merge_method == 'average':
                     modals[band, ...][in_mask] += 1
                     output[band, ...][in_mask] += a[in_mask]
@@ -401,10 +455,20 @@ class Mosaic(object):
         return output
 
     def slice(self, extent):
+        """
+        Collect a dask array of an extent within the mosaic.
+
+        .. Note::
+            If the extent does not line up with the cell edges exactly, the extent of resulting data are 
+            snapped to a greater window matching the mosaic cell size.
+
+        :param tuple extent: Extent coordinates in the form (top, bottom, left, right)
+        :return: Dask array of sliced data from the mosaic
+        """
         top, bottom, left, right = extent
         if top <= bottom or right <= left:
             raise ValueError('Cannot slice with negative or zero dimensions')
-        
+
         if top > self.top:
             raise IndexError('Top of extent exceeds mosaic boundary')
         if left < self.left:
@@ -441,10 +505,46 @@ class Mosaic(object):
 
 
 def open_mosaic(rasters, **kwargs):
+    """
+    API for Mosaic- open a mosaic of rasters
+
+    .. highlight:: python
+    .. code-block:: python
+
+        from daskaic import open_mosaic
+
+
+        rasters = ['rasters_1.tif', 'raster_2.tif', 'raster_3.tif']
+        mosaic = open_mosaic(rasters)
+
+    Alternatively, add some specs to the mosaic, using parameters specified in :class:`Mosaic`
+    .. highlight:: python
+    .. code-block:: python
+
+        mosaic = open_mosaic(rasters, sr=4326, merge_method='average', chunks={'bands': 1, 'x': 1024, 'y': 1024})
+    """
     return Mosaic(rasters, **kwargs)
 
 
 def open_dask(rasters, **kwargs):
+    """
+    Open a mosaic of rasters as a dask array to enable numpy-like syntax and methods. A masked array is returned,
+    which will avoid use of no data values when supported operations are used.
+
+    .. Note:: Always check which masked operations are supported to avoid erroneous results that include no data values
+
+    .. highlight:: python
+    .. code-block:: python
+
+        from daskaic import open_dask
+        import dask.array as da
+
+
+        rasters = ['rasters_1.tif', 'raster_2.tif', 'raster_3.tif']
+        a = open_dask(rasters)
+    
+        b = da.cos(a * 2)
+    """
     mosaic = open_mosaic(rasters, **kwargs)
     return da.ma.masked_equal(
         da.from_array(mosaic, chunks=(mosaic.chunks['bands'], mosaic.chunks['y'], mosaic.chunks['x'])),
