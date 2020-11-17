@@ -4,6 +4,9 @@ from osgeo import gdal
 
 
 class Raster(object):
+    """
+    Open a raster dataset to read specifications and access data as numpy arrays
+    """
     def __init__(self, data):
         self.source = data
 
@@ -58,11 +61,31 @@ class Raster(object):
     def extent(self):
         return self.top, self.bottom, self.left, self.right
 
-    def read_as_array(self, band, xoff, yoff, win_xsize, win_ysize):
+    def read_as_array(self, band, xoff=None, yoff=None, win_xsize=None, win_ysize=None):
+        """
+        Wrapper for ``gdal.ReadAsArray()``
+
+        :param int band: Raster band index (starts from 1)
+        :param int xoff: Index offset in the x-direction
+        :param int yoff: Index offset in the y-direction
+        :param int win_xsize: Shape of the extracted data block in the x-direction
+        :param int win_ysize: Shape of the extracted data block in the y-direction
+        """
         with self.ds as ds:
             a = ds.GetRasterBand(band).ReadAsArray(xoff=xoff, yoff=yoff, win_xsize=win_xsize, win_ysize=win_ysize)
         return a
 
 
 def open_raster(raster_path):
+    """
+    Open a raster dataset from a specified path
+
+    .. highlight:: python
+    .. code-block:: python
+
+        from daskaic import open_raster
+
+        r = open_raster('raster_1.tif')
+        numpy_array = r.read_as_array(1)
+    """
     return Raster(raster_path)

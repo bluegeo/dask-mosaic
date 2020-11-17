@@ -14,7 +14,7 @@
   <link rel="stylesheet" type="text/css" href="_static/css/bootstrap-theme.min.css" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-    <title>Dask Mosaic &#8212; Dask Mosaic 0.1 documentation</title>
+    <title>Raster &#8212; Dask Mosaic 0.1 documentation</title>
     <link rel="stylesheet" href="_static/guzzle.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -24,7 +24,7 @@
     <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Mosaic" href="mosaic.html" />
+    <link rel="prev" title="Mosaic" href="mosaic.html" />
   
    
 
@@ -37,9 +37,9 @@
              accesskey="I">index</a></li>
         <li class="right" >
           <a href="mosaic.html" title="Mosaic"
-             accesskey="N">next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">Dask Mosaic 0.1 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Dask Mosaic</a></li> 
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Dask Mosaic 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Raster</a></li> 
       </ul>
     </div>
     <div class="container-wrapper">
@@ -49,7 +49,7 @@
       </div>
   <div id="left-column">
     <div class="sphinxsidebar"><a href="
-    #" class="text-logo">Dask Mosaic 0.1 documentation</a>
+    index.html" class="text-logo">Dask Mosaic 0.1 documentation</a>
 <div class="sidebar-block">
   <div class="sidebar-wrapper">
     <h2>Table Of Contents</h2>
@@ -57,8 +57,9 @@
   <div class="sidebar-toc">
     
     
-      <ul>
+      <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="mosaic.html">Mosaic</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Raster</a></li>
 </ul>
 
     
@@ -84,36 +85,50 @@
           
           <div role="navigation" aria-label="breadcrumbs navigation">
             <ol class="breadcrumb">
-              <li><a href="#">Docs</a></li>
+              <li><a href="index.html">Docs</a></li>
               
-              <li>Dask Mosaic</li>
+              <li>Raster</li>
             </ol>
           </div>
           
           <div class="document clearer body">
             
-  <div class="section" id="dask-mosaic">
-<h1>Dask Mosaic<a class="headerlink" href="#dask-mosaic" title="Permalink to this headline">¶</a></h1>
-<p><em>Create lazy reads and alignment of a mosaic of rasters</em></p>
-<p><strong>Background</strong></p>
-<p>Leveraging the power of dask and lazily reading raster data is an effective way of managing memory and taking advantage of parallelism. This can be done easily using <cite>xarray</cite>, <cite>rasterio</cite>, and <cite>dask</cite>, although this only works with a single raster
-dataset. Dask Mosaic seeks to allow similar functionality using a number of rasters as the input, regardless of
-extent, resolution, and spatial reference.</p>
-<p>Typically a new raster would need to be created using the <cite>merge</cite>
-functionality of <cite>rasterio</cite>, then openend using <cite>xarray</cite> to yield a dask array. A merged raster file would need to be
-rectangular and could take a large amount of storage and time to create. If the alignment of rasters was also done
-lazily, this step may be skipped.</p>
-<p><em>When should this library be used?</em></p>
-<p>Where a number of rasters have similar resolutions and spatial references, the merging of data for extraction of smaller
-blocks will be performant. Otherwise, where large blocks/chunks may be used, this library will still be beneficial.</p>
-<p><em>When should this not be used?</em></p>
-<p>If many rasters are referenced that have diverse spatial references, alignment, and projections, reading of blocks may
-be slow. As such, using small chunking to save memory may be prohibitively slow.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="mosaic.html">Mosaic</a></li>
+  <div class="section" id="raster">
+<span id="id1"></span><h1>Raster<a class="headerlink" href="#raster" title="Permalink to this headline">¶</a></h1>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="mosaic.html#daskaic.Mosaic" title="daskaic.Mosaic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Mosaic</span></code></a>(rasters, **kwargs)</p></td>
+<td><p>A collection of rasters with a single defined spatial reference and discretization</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt id="daskaic.Raster">
+<em class="property">class </em><code class="sig-prename descclassname">daskaic.</code><code class="sig-name descname">Raster</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span></em><span class="sig-paren">)</span><a class="headerlink" href="#daskaic.Raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open a raster dataset to read specifications and access data as numpy arrays</p>
+<dl class="py method">
+<dt id="daskaic.Raster.read_as_array">
+<code class="sig-name descname">read_as_array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">xoff</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">yoff</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">win_xsize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">win_ysize</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#daskaic.Raster.read_as_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper for <code class="docutils literal notranslate"><span class="pre">gdal.ReadAsArray()</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>band</strong> (<em>int</em>) – Raster band index (starts from 1)</p></li>
+<li><p><strong>xoff</strong> (<em>int</em>) – Index offset in the x-direction</p></li>
+<li><p><strong>yoff</strong> (<em>int</em>) – Index offset in the y-direction</p></li>
+<li><p><strong>win_xsize</strong> (<em>int</em>) – Shape of the extracted data block in the x-direction</p></li>
+<li><p><strong>win_ysize</strong> (<em>int</em>) – Shape of the extracted data block in the y-direction</p></li>
 </ul>
-</div>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 
 
@@ -121,9 +136,10 @@ be slow. As such, using small chunking to save memory may be prohibitively slow.
             
   <div class="footer-relations">
     
-      <div class="pull-right">
-        <a class="btn btn-default" href="mosaic.html" title="next chapter (use the right arrow)">Mosaic</a>
+      <div class="pull-left">
+        <a class="btn btn-default" href="mosaic.html" title="previous chapter (use the left arrow)">Mosaic</a>
       </div>
+    
     </div>
     <div class="clearer"></div>
   
@@ -138,9 +154,9 @@ be slow. As such, using small chunking to save memory may be prohibitively slow.
              >index</a></li>
         <li class="right" >
           <a href="mosaic.html" title="Mosaic"
-             >next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">Dask Mosaic 0.1 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Dask Mosaic</a></li> 
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Dask Mosaic 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Raster</a></li> 
       </ul>
     </div>
 <script type="text/javascript">

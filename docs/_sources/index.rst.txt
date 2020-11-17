@@ -30,4 +30,7 @@ If many rasters are referenced that have diverse spatial references, alignment, 
 be slow. As such, using small chunking to save memory may be prohibitively slow.
 
 .. toctree::
-   mosaic
+    :hidden:
+
+    mosaic
+    raster
