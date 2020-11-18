@@ -111,14 +111,12 @@ class Raster(object):
                 )
             )
 
-        if a.shape == (1, 1, 1):
-            write_data = np.empty(self.shape, self.dtype)
-            write_data.fill(np.squeeze(a))
-        else:
-            write_data = a
+        if hasattr(a, 'mask'):
+            a[np.ma.getmaskarray(a)] = self.nodata[band - 1]
+        a = np.squeeze(a, 0)
 
         with self.ds as ds:
-            ds.GetRasterBand(band).WriteArray(np.squeeze(write_data), xoff=xoff, yoff=yoff)
+            ds.GetRasterBand(band).WriteArray(a, xoff=xoff, yoff=yoff)
             ds.FlushCache()
 
 

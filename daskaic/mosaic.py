@@ -39,7 +39,7 @@ class Mosaic(object):
                 Method to align, or reduce raster bands during data access. This may be a dict in the form:
 
                 ``{1: [<raster 1 band>, <raster 2 band>], 2: [<raster 1 band>, <raster 2 band>]}``
-                
+
                 where the keys are the output bands (z-dimensions) when data are read, and the values are lists with exactly
                 the same length as the rasters in the mosaic with band numbers mapped in order.
                 This argument may also be the value ``'number'``, which means all band numbers from all rasters will
@@ -129,6 +129,20 @@ class Mosaic(object):
     @property
     def extent(self):
         return self.top, self.bottom, self.left, self.right
+
+    @property
+    def chunk_tuple(self):
+        return self.chunks['bands'], self.chunks['y'], self.chunks['x']
+
+    @property
+    def dask(self):
+        """
+        Return the dask array of the mosaic
+        """
+        return da.ma.masked_equal(
+            da.from_array(self, chunks=(self.chunks['bands'], self.chunks['y'], self.chunks['x'])),
+            self.nodata
+        )
 
     def _populate_band_alignment(self, data):
         if isinstance(data, dict):
@@ -512,7 +526,8 @@ class Mosaic(object):
             raster_path, self.top, self.left, self.shape, self.csx, self.csy, self.sr, self.dtype, self.nodata,
             self.chunks
         )
-        da.store([dask], [raster])
+
+        da.store([dask.reshape(self.shape).rechunk(self.chunk_tuple)], [raster])
 
     def save(self, raster_path):
         """
@@ -575,11 +590,7 @@ def open_dask(rasters, **kwargs):
 
         rasters = ['rasters_1.tif', 'raster_2.tif', 'raster_3.tif']
         a = open_dask(rasters)
-    
+
         b = da.cos(a * 2)
     """
-    mosaic = open_mosaic(rasters, **kwargs)
-    return da.ma.masked_equal(
-        da.from_array(mosaic, chunks=(mosaic.chunks['bands'], mosaic.chunks['y'], mosaic.chunks['x'])),
-        mosaic.nodata
-    )
+    open_mosaic(rasters, **kwargs).dask

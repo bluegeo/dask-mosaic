@@ -2,6 +2,12 @@
 
 Create lazy reads and alignment of a mosaic of rasters
 
+---
+
+**Documentation**: <a href="https://github.com/bluegeo/dask-mosaic" target="_blank">https://github.com/bluegeo/dask-mosaic</a>
+
+---
+
 ## Background
 
 Leveraging the power of dask and lazily reading raster data is an effective way of managing memory and taking advantage of parallelism. This can be done easily using `xarray`, `rasterio`, and `dask`, although this only works with a single raster
@@ -23,6 +29,8 @@ _When should this not be used?_
 If many rasters are referenced that have diverse spatial references, alignment, and projections, reading of blocks may
 be slow. As such, using small chunking to save memory may be prohibitively slow.
 
+---
+
 ## Usage
 
 To lazily load a mosaic of rasters
@@ -40,7 +48,7 @@ data
 <daskaic of 3 rasters, shape=(1, 11800, 9981), dtype=float32, left=244590.0, top=6156495.0, csx=60.0, csy=60.0 chunks={'bands': 1, 'x': 1024, 'y': 1024}>
 
 # Create a dask array
-da.from_array(data, chunks=(data.chunks['bands'], data.chunks['y'], data.chunks['x']))
+da.from_array(data, chunks=data.chunk_tuple)
 dask.array<array, shape=(1, 11800, 9981), dtype=float32, chunksize=(1, 1024, 1024), chunktype=numpy.ndarray>
 
 # Another method is provided to directly create a dask array- this should be the preferred option
@@ -68,6 +76,8 @@ When no kwargs are used, the parameters are inferred. Defaults include:
 | `csx`            | `'smallest'`  | Extraction cell size in the x-direction. Defaults to the smallest of all inputs.                           |
 | `csy`            | `'smallest'`  | Extraction cell size in the y-direction. Defaults to the smallest of all inputs.                           |
 | `nodata`         | `None`        | Raster no data value. Defaults to `None`, and the value is derived from the data type.                     |
+
+---
 
 ## Cloud support
 

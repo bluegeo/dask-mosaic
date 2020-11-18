@@ -67,6 +67,21 @@
 </div>
 <div class="sidebar-block">
   <div class="sidebar-wrapper">
+    <h2>Contents</h2>
+    <div class="sidebar-localtoc">
+      <ul>
+<li><a class="reference internal" href="#">Dask Mosaic</a><ul>
+<li><a class="reference internal" href="#background">Background</a></li>
+<li><a class="reference internal" href="#quickstart">Quickstart</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+</div>
+<div class="sidebar-block">
+  <div class="sidebar-wrapper">
     <div id="main-search">
       <form class="form-inline" action="search.html" method="GET" role="form">
         <div class="input-group">
@@ -96,7 +111,8 @@
   <div class="section" id="dask-mosaic">
 <h1>Dask Mosaic<a class="headerlink" href="#dask-mosaic" title="Permalink to this headline">¶</a></h1>
 <p><em>Create lazy reads and alignment of a mosaic of rasters</em></p>
-<p><strong>Background</strong></p>
+<div class="section" id="background">
+<h2>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
 <p>Leveraging the power of dask and lazily reading raster data is an effective way of managing memory and taking advantage of parallelism. This can be done easily using <cite>xarray</cite>, <cite>rasterio</cite>, and <cite>dask</cite>, although this only works with a single raster
 dataset. Dask Mosaic seeks to allow similar functionality using a number of rasters as the input, regardless of
 extent, resolution, and spatial reference.</p>
@@ -110,7 +126,49 @@ blocks will be performant. Otherwise, where large blocks/chunks may be used, thi
 <p><em>When should this not be used?</em></p>
 <p>If many rasters are referenced that have diverse spatial references, alignment, and projections, reading of blocks may
 be slow. As such, using small chunking to save memory may be prohibitively slow.</p>
+</div>
+<div class="section" id="quickstart">
+<h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
+<p>Compute topogrpahic slope from 3 rasters that exist throughout a study area</p>
+<p>Create a mosaic and combine rasters that overlap with a mean calculation.
+Also, set a desired spatial reference and resolution.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">daskaic</span> <span class="kn">import</span> <span class="n">open_mosaic</span>
+<span class="kn">import</span> <span class="nn">dask.array</span> <span class="k">as</span> <span class="nn">da</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<span class="n">rasters</span> <span class="o">=</span> <span class="p">[</span>
+   <span class="s1">&#39;/home/user/my_elevation.tif&#39;</span><span class="p">,</span>  <span class="c1"># Local</span>
+   <span class="s1">&#39;/vsis3_streaming/my-terrain-bucket/elevation.tif&#39;</span><span class="p">,</span>  <span class="c1"># COG on an S3 bucket</span>
+   <span class="s1">&#39;/shared/client_dem.tif&#39;</span>  <span class="c1"># Local</span>
+<span class="p">]</span>
+<span class="n">mosaic</span> <span class="o">=</span> <span class="n">open_mosaic</span><span class="p">(</span><span class="n">rasters</span><span class="p">,</span> <span class="n">merge_method</span><span class="o">=</span><span class="s1">&#39;average&#39;</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">26911</span><span class="p">,</span> <span class="n">csx</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">csy</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Collect the dask array (lazy data reading) from the mosaic and calculate slope in degrees</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">mosaic</span><span class="o">.</span><span class="n">dask</span>
+
+<span class="c1"># Remove first dimension because we&#39;re dealing with only one band</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+
+<span class="c1"># Calculate gradient in the x and y-directions</span>
+<span class="n">dx</span> <span class="o">=</span> <span class="p">((</span><span class="n">a</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span> <span class="p">(</span><span class="n">a</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">:])</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span> <span class="mi">2</span><span class="p">:]))</span>
+<span class="n">dx</span> <span class="o">/=</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="n">mosaic</span><span class="o">.</span><span class="n">csx</span><span class="p">)</span>
+<span class="n">dy</span> <span class="o">=</span> <span class="p">((</span><span class="n">a</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">a</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="n">a</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">:])</span> <span class="o">-</span> <span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span> <span class="mi">2</span><span class="p">:]))</span>
+<span class="n">dy</span> <span class="o">/=</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="n">mosaic</span><span class="o">.</span><span class="n">csy</span><span class="p">)</span>
+
+<span class="c1"># Calculate slope in degrees</span>
+<span class="n">slope</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">arctan</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">dx</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">dy</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span> <span class="o">*</span> <span class="p">(</span><span class="mi">180</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+<span class="c1"># Important - the dask shape must match the original mosaic to be used to save the output</span>
+<span class="n">slope</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">slope</span><span class="p">,</span> <span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;constant&#39;</span><span class="p">,</span> <span class="n">constant_values</span><span class="o">=</span><span class="n">mosaic</span><span class="o">.</span><span class="n">nodata</span><span class="p">)</span>
+
+<span class="c1"># Save the output to a GeoTiff</span>
+<span class="n">mosaic</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">slope</span><span class="p">,</span> <span class="s1">&#39;/home/user/slope_from_mosaic.tif&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 <div class="toctree-wrapper compound">
+</div>
 </div>
 </div>
 

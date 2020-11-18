@@ -8,7 +8,8 @@ Dask Mosaic
 
 *Create lazy reads and alignment of a mosaic of rasters*
 
-**Background**
+Background
+##########
 
 Leveraging the power of dask and lazily reading raster data is an effective way of managing memory and taking advantage of parallelism. This can be done easily using `xarray`, `rasterio`, and `dask`, although this only works with a single raster
 dataset. Dask Mosaic seeks to allow similar functionality using a number of rasters as the input, regardless of
@@ -28,6 +29,51 @@ blocks will be performant. Otherwise, where large blocks/chunks may be used, thi
 
 If many rasters are referenced that have diverse spatial references, alignment, and projections, reading of blocks may
 be slow. As such, using small chunking to save memory may be prohibitively slow.
+
+Quickstart
+##########
+Compute topogrpahic slope from 3 rasters that exist throughout a study area
+
+Create a mosaic and combine rasters that overlap with a mean calculation.
+Also, set a desired spatial reference and resolution.
+
+.. code-block:: python
+
+   from daskaic import open_mosaic
+   import dask.array as da
+   import numpy as np
+   
+
+   rasters = [
+      '/home/user/my_elevation.tif',  # Local
+      '/vsis3_streaming/my-terrain-bucket/elevation.tif',  # COG on an S3 bucket
+      '/shared/client_dem.tif'  # Local
+   ]
+   mosaic = open_mosaic(rasters, merge_method='average', sr=26911, csx=15, csy=15)
+
+Collect the dask array (lazy data reading) from the mosaic and calculate slope in degrees
+
+.. code-block:: python
+
+   a = mosaic.dask
+
+   # Remove first dimension because we're dealing with only one band
+   a = da.squeeze(a)
+
+   # Calculate gradient in the x and y-directions
+   dx = ((a[:-2, :-2] + (2 * a[1:-1, :-2]) + a[2:, :-2]) - (a[:-2, 2:] + (2 * a[1:-1, 2:]) + a[2:, 2:]))
+   dx /= (8 * mosaic.csx)
+   dy = ((a[:-2, :-2] + (2 * a[:-2, 1:-1]) + a[:-2, 2:]) - (a[2:, :-2] + (2 * a[2:, 1:-1]) + a[2:, 2:]))
+   dy /= (8 * mosaic.csy)
+
+   # Calculate slope in degrees
+   slope = da.arctan(da.sqrt((dx**2) + (dy**2))) * (180 / np.pi)
+
+   # Important - the dask shape must match the original mosaic to be used to save the output
+   slope = da.pad(slope, ((1, 1), (1, 1)), mode='constant', constant_values=mosaic.nodata)
+
+   # Save the output to a GeoTiff
+   mosaic.store(slope, '/home/user/slope_from_mosaic.tif')
 
 .. toctree::
     :hidden:
