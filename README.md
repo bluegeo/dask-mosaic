@@ -4,7 +4,7 @@ Create lazy reads and alignment of a mosaic of rasters
 
 ---
 
-**Documentation**: <a href="https://github.com/bluegeo/dask-mosaic" target="_blank">https://github.com/bluegeo/dask-mosaic</a>
+**Documentation**: <a href="https://bluegeo.github.io/dask-mosaic/" target="_blank">https://bluegeo.github.io/dask-mosaic/</a>
 
 ---
 
