@@ -24,7 +24,7 @@
     <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Mosaic" href="mosaic.html" />
+    <link rel="next" title="Installation" href="installation.html" />
   
    
 
@@ -36,7 +36,7 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="mosaic.html" title="Mosaic"
+          <a href="installation.html" title="Installation"
              accesskey="N">next</a> |</li>
         <li class="nav-item nav-item-0"><a href="#">Dask Mosaic 0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Dask Mosaic</a></li> 
@@ -58,6 +58,7 @@
     
     
       <ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mosaic.html">Mosaic</a></li>
 <li class="toctree-l1"><a class="reference internal" href="raster.html">Raster</a></li>
 </ul>
@@ -113,12 +114,13 @@
 <p><em>Create lazy reads and alignment of a mosaic of rasters</em></p>
 <div class="section" id="background">
 <h2>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
-<p>Leveraging the power of dask and lazily reading raster data is an effective way of managing memory and taking advantage of parallelism. This can be done easily using <cite>xarray</cite>, <cite>rasterio</cite>, and <cite>dask</cite>, although this only works with a single raster
-dataset. Dask Mosaic seeks to allow similar functionality using a number of rasters as the input, regardless of
+<p>Leveraging the power of dask and lazily reading raster data is an effective way of managing memory and taking advantage of parallelism.
+This can be done easily using <a class="reference external" href="https://examples.dask.org/applications/satellite-imagery-geotiff.html">xarray, rasterio, and dask</a>,
+although this only works with a single raster dataset. Dask Mosaic seeks to allow similar functionality using a number of rasters as the input, regardless of
 extent, resolution, and spatial reference.</p>
-<p>Typically a new raster would need to be created using the <cite>merge</cite>
-functionality of <cite>rasterio</cite>, then openend using <cite>xarray</cite> to yield a dask array. A merged raster file would need to be
-rectangular and could take a large amount of storage and time to create. If the alignment of rasters was also done
+<p>Typically a new raster would need to be created using the <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.merge.html">rasterio.merge</a>
+method, then openend using <a class="reference external" href="http://xarray.pydata.org/en/stable/generated/xarray.open_rasterio.html">xarray</a> to yield a dask array.
+A merged raster file would need to be rectangular and could take a large amount of storage and time to create. If the alignment of rasters was also done
 lazily, this step may be skipped.</p>
 <p><em>When should this library be used?</em></p>
 <p>Where a number of rasters have similar resolutions and spatial references, the merging of data for extraction of smaller
@@ -160,8 +162,11 @@ Also, set a desired spatial reference and resolution.</p>
 <span class="c1"># Calculate slope in degrees</span>
 <span class="n">slope</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">arctan</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">dx</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">dy</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span> <span class="o">*</span> <span class="p">(</span><span class="mi">180</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
 
-<span class="c1"># Important - the dask shape must match the original mosaic to be used to save the output</span>
-<span class="n">slope</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">slope</span><span class="p">,</span> <span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;constant&#39;</span><span class="p">,</span> <span class="n">constant_values</span><span class="o">=</span><span class="n">mosaic</span><span class="o">.</span><span class="n">nodata</span><span class="p">)</span>
+<span class="c1"># Important - the dask shape must match the original mosaic</span>
+<span class="n">slope</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span>
+    <span class="n">slope</span><span class="p">,</span> <span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;constant&#39;</span><span class="p">,</span> <span class="n">constant_values</span><span class="o">=</span><span class="n">mosaic</span><span class="o">.</span><span class="n">nodata</span>
+<span class="p">)</span>
 
 <span class="c1"># Save the output to a GeoTiff</span>
 <span class="n">mosaic</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">slope</span><span class="p">,</span> <span class="s1">&#39;/home/user/slope_from_mosaic.tif&#39;</span><span class="p">)</span>
@@ -178,7 +183,7 @@ Also, set a desired spatial reference and resolution.</p>
   <div class="footer-relations">
     
       <div class="pull-right">
-        <a class="btn btn-default" href="mosaic.html" title="next chapter (use the right arrow)">Mosaic</a>
+        <a class="btn btn-default" href="installation.html" title="next chapter (use the right arrow)">Installation</a>
       </div>
     </div>
     <div class="clearer"></div>
@@ -193,7 +198,7 @@ Also, set a desired spatial reference and resolution.</p>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="mosaic.html" title="Mosaic"
+          <a href="installation.html" title="Installation"
              >next</a> |</li>
         <li class="nav-item nav-item-0"><a href="#">Dask Mosaic 0.1 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Dask Mosaic</a></li> 

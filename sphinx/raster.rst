@@ -5,7 +5,7 @@ Raster
 ======
 
 .. contents:: Table of contents
-    :depth: 2
+    :depth: 1
     :local:
 
 .. py:currentmodule:: daskaic

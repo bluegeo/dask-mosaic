@@ -11,13 +11,14 @@ Dask Mosaic
 Background
 ##########
 
-Leveraging the power of dask and lazily reading raster data is an effective way of managing memory and taking advantage of parallelism. This can be done easily using `xarray`, `rasterio`, and `dask`, although this only works with a single raster
-dataset. Dask Mosaic seeks to allow similar functionality using a number of rasters as the input, regardless of
+Leveraging the power of dask and lazily reading raster data is an effective way of managing memory and taking advantage of parallelism.
+This can be done easily using `xarray, rasterio, and dask <https://examples.dask.org/applications/satellite-imagery-geotiff.html>`_,
+although this only works with a single raster dataset. Dask Mosaic seeks to allow similar functionality using a number of rasters as the input, regardless of
 extent, resolution, and spatial reference.
 
-Typically a new raster would need to be created using the `merge`
-functionality of `rasterio`, then openend using `xarray` to yield a dask array. A merged raster file would need to be
-rectangular and could take a large amount of storage and time to create. If the alignment of rasters was also done
+Typically a new raster would need to be created using the `rasterio.merge <https://rasterio.readthedocs.io/en/latest/api/rasterio.merge.html>`_
+method, then openend using `xarray <http://xarray.pydata.org/en/stable/generated/xarray.open_rasterio.html>`_ to yield a dask array.
+A merged raster file would need to be rectangular and could take a large amount of storage and time to create. If the alignment of rasters was also done
 lazily, this step may be skipped.
 
 *When should this library be used?*
@@ -69,8 +70,11 @@ Collect the dask array (lazy data reading) from the mosaic and calculate slope i
    # Calculate slope in degrees
    slope = da.arctan(da.sqrt((dx**2) + (dy**2))) * (180 / np.pi)
 
-   # Important - the dask shape must match the original mosaic to be used to save the output
-   slope = da.pad(slope, ((1, 1), (1, 1)), mode='constant', constant_values=mosaic.nodata)
+   # Important - the dask shape must match the original mosaic
+   slope = da.pad(
+       slope, ((1, 1), (1, 1)),
+       mode='constant', constant_values=mosaic.nodata
+   )
 
    # Save the output to a GeoTiff
    mosaic.store(slope, '/home/user/slope_from_mosaic.tif')
@@ -78,5 +82,6 @@ Collect the dask array (lazy data reading) from the mosaic and calculate slope i
 .. toctree::
     :hidden:
 
+    installation
     mosaic
     raster

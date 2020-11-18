@@ -14,7 +14,7 @@
   <link rel="stylesheet" type="text/css" href="_static/css/bootstrap-theme.min.css" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-    <title>Raster &#8212; Dask Mosaic 0.1 documentation</title>
+    <title>Installation &#8212; Dask Mosaic 0.1 documentation</title>
     <link rel="stylesheet" href="_static/guzzle.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -24,7 +24,8 @@
     <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Mosaic" href="mosaic.html" />
+    <link rel="next" title="Mosaic" href="mosaic.html" />
+    <link rel="prev" title="Dask Mosaic" href="index.html" />
   
    
 
@@ -37,9 +38,12 @@
              accesskey="I">index</a></li>
         <li class="right" >
           <a href="mosaic.html" title="Mosaic"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Dask Mosaic"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Dask Mosaic 0.1 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Raster</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>
     <div class="container-wrapper">
@@ -58,12 +62,31 @@
     
     
       <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#install-gdal">1. Install GDAL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#install-dask-mosaic-from-the-github-repo">2. Install Dask Mosaic from the Github repo.</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="mosaic.html">Mosaic</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Raster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raster.html">Raster</a></li>
 </ul>
 
     
+  </div>
+</div>
+<div class="sidebar-block">
+  <div class="sidebar-wrapper">
+    <h2>Contents</h2>
+    <div class="sidebar-localtoc">
+      <ul>
+<li><a class="reference internal" href="#">Installation</a><ul>
+<li><a class="reference internal" href="#install-gdal">1. Install GDAL</a></li>
+<li><a class="reference internal" href="#install-dask-mosaic-from-the-github-repo">2. Install Dask Mosaic from the Github repo.</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
   </div>
 </div>
 <div class="sidebar-block">
@@ -88,48 +111,32 @@
             <ol class="breadcrumb">
               <li><a href="index.html">Docs</a></li>
               
-              <li>Raster</li>
+              <li>Installation</li>
             </ol>
           </div>
           
           <div class="document clearer body">
             
-  <div class="section" id="raster">
-<span id="id1"></span><h1>Raster<a class="headerlink" href="#raster" title="Permalink to this headline">¶</a></h1>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="mosaic.html#daskaic.Mosaic" title="daskaic.Mosaic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Mosaic</span></code></a>(rasters, **kwargs)</p></td>
-<td><p>A collection of rasters with a single defined spatial reference and discretization</p></td>
-</tr>
-</tbody>
-</table>
-<dl class="py class">
-<dt id="daskaic.Raster">
-<em class="property">class </em><code class="sig-prename descclassname">daskaic.</code><code class="sig-name descname">Raster</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span></em><span class="sig-paren">)</span><a class="headerlink" href="#daskaic.Raster" title="Permalink to this definition">¶</a></dt>
-<dd><p>Open a raster dataset to read specifications and access data as numpy arrays</p>
-<dl class="py method">
-<dt id="daskaic.Raster.read_as_array">
-<code class="sig-name descname">read_as_array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">xoff</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">yoff</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">win_xsize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">win_ysize</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#daskaic.Raster.read_as_array" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wrapper for <code class="docutils literal notranslate"><span class="pre">gdal.ReadAsArray()</span></code></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>band</strong> (<em>int</em>) – Raster band index (starts from 1)</p></li>
-<li><p><strong>xoff</strong> (<em>int</em>) – Index offset in the x-direction</p></li>
-<li><p><strong>yoff</strong> (<em>int</em>) – Index offset in the y-direction</p></li>
-<li><p><strong>win_xsize</strong> (<em>int</em>) – Shape of the extracted data block in the x-direction</p></li>
-<li><p><strong>win_ysize</strong> (<em>int</em>) – Shape of the extracted data block in the y-direction</p></li>
+  <div class="section" id="installation">
+<span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="table-of-contents">
+<p class="topic-title">Table of contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#install-gdal" id="id2">1. Install GDAL</a></p></li>
+<li><p><a class="reference internal" href="#install-dask-mosaic-from-the-github-repo" id="id3">2. Install Dask Mosaic from the Github repo.</a></p></li>
 </ul>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
+</div>
+<div class="section" id="install-gdal">
+<h2><a class="toc-backref" href="#id2">1. Install GDAL</a><a class="headerlink" href="#install-gdal" title="Permalink to this headline">¶</a></h2>
+<p>One of the easiest ways to install GDAL is to use <a class="reference external" href="https://www.anaconda.com/">Anaconda</a></p>
+<p>Then simply</p>
+<p><code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">install</span> <span class="pre">gdal</span></code></p>
+<p>For other methods see the <a class="reference external" href="https://gdal.org/">GDAL documentation</a></p>
+</div>
+<div class="section" id="install-dask-mosaic-from-the-github-repo">
+<h2><a class="toc-backref" href="#id3">2. Install Dask Mosaic from the Github repo.</a><a class="headerlink" href="#install-dask-mosaic-from-the-github-repo" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">git+https://github.com/bluegeo/dask-mosaic</span></code></p>
+</div>
 </div>
 
 
@@ -138,9 +145,12 @@
   <div class="footer-relations">
     
       <div class="pull-left">
-        <a class="btn btn-default" href="mosaic.html" title="previous chapter (use the left arrow)">Mosaic</a>
+        <a class="btn btn-default" href="index.html" title="previous chapter (use the left arrow)">Dask Mosaic</a>
       </div>
     
+      <div class="pull-right">
+        <a class="btn btn-default" href="mosaic.html" title="next chapter (use the right arrow)">Mosaic</a>
+      </div>
     </div>
     <div class="clearer"></div>
   
@@ -155,9 +165,12 @@
              >index</a></li>
         <li class="right" >
           <a href="mosaic.html" title="Mosaic"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Dask Mosaic"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Dask Mosaic 0.1 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Raster</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
       </ul>
     </div>
 <script type="text/javascript">
