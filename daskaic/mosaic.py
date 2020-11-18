@@ -1,7 +1,7 @@
 import numpy as np
 import dask.array as da
 from osgeo import gdal
-from .abstract import Raster
+from .abstract import Raster, create_raster_source
 from .util import compare_projections, transform_extent, get_user_sr, get_highest_dtype, nearly_aligns, intersects
 
 
@@ -31,12 +31,16 @@ class Mosaic(object):
                 Defaults to ``'union'``, which is the bounds of all input rasters
             **chunks** (*int* or *dict*) -- 
                 Chunks used for mapped data access by dask. Specify explictly using a dict in the form
-                {'bands': <number of bands>, 'x': <chunks in the x-direction>, 'y': <chunks in the y-direction>}.
-                Otherwise, specify a block size multiplier for the raster with the smallest block size. Defaults to ``2``.
+
+                ``{'bands': <number of bands>, 'x': <chunks in the x-direction>, 'y': <chunks in the y-direction>}``
+
+                Otherwise, specify a block size multiplier for the raster with the smallest block size. Defaults to ``8``.
             **band_alignment** (*str* or *dict*) -- 
                 Method to align, or reduce raster bands during data access. This may be a dict in the form:
-                {1: [<raster 1 band>, <raster 2 band>], 2: [<raster 1 band>, <raster 2 band>]}, where the
-                keys are the output bands (z-dimensions) when data are read, and the values are lists with exactly
+
+                ``{1: [<raster 1 band>, <raster 2 band>], 2: [<raster 1 band>, <raster 2 band>]}``
+                
+                where the keys are the output bands (z-dimensions) when data are read, and the values are lists with exactly
                 the same length as the rasters in the mosaic with band numbers mapped in order.
                 This argument may also be the value ``'number'``, which means all band numbers from all rasters will
                 align by index.
@@ -106,11 +110,11 @@ class Mosaic(object):
 
         # Data specifications
         self.dtype = self._populate_dtype(kwargs.get('dtype', 'highest'))
-        self.nodata = self._populate_nodata(kwargs.get('nodata', None))
+        self.nodata = float(self._populate_nodata(kwargs.get('nodata', None)))
 
         # For Dask
         self.ndim = 3
-        self.chunks = self._populate_chunks(kwargs.get('chunks', 2))
+        self.chunks = self._populate_chunks(kwargs.get('chunks', 8))
 
         # Internal
         self.band_cache = {}
@@ -270,7 +274,7 @@ class Mosaic(object):
         # If the mosaic and the raster both align a simple slice may be used
         if nearly_aligns(self, raster):
             # Extraction dimensions
-            e_i = int(round((raster.top - rast_ymin) / raster.csy))
+            e_i = int(round((raster.top - rast_ymax) / raster.csy))
             e_j = int(round((rast_xmin - raster.left) / raster.csx))
             e_i_shape = raster.shape[1]
             e_j_shape = raster.shape[2]
@@ -491,6 +495,34 @@ class Mosaic(object):
             self.nodata
         )
 
+    def store(self, dask, raster_path):
+        """
+        Store a computed dask array into a new raster path. The format of the output raster will be interpreted by GDAL,
+        although additional parameters will be implicitly added for a GeoTiff output to make it cloud optimized.
+
+        .. Note::
+                The dask should have been created using the same Mosaic instance that is used to store it. Also, 
+                if the dask graph includes subsequent reductions or slicing, the dask may not fit the mosaic spatial
+                definition.
+
+        :param dask.Array dask: Input dask array
+        :param str raster_path: Input path to a raster source.
+        """
+        raster = create_raster_source(
+            raster_path, self.top, self.left, self.shape, self.csx, self.csy, self.sr, self.dtype, self.nodata,
+            self.chunks
+        )
+        da.store([dask], [raster])
+
+    def save(self, raster_path):
+        """
+        Store the computed mosaic into a raster data target
+
+        :param str raster_path: Input path to a raster source.
+        """
+        dask = da.from_array(self, chunks=(self.chunks['bands'], self.chunks['y'], self.chunks['x']))
+        self.store(dask, raster_path)
+
     def __repr__(self):
         return '<daskaic of {} rasters, shape={}, dtype={}, left={}, top={}, csx={}, csy={} chunks={}>'.format(
             len(self.rasters),
@@ -506,7 +538,7 @@ class Mosaic(object):
 
 def open_mosaic(rasters, **kwargs):
     """
-    API for Mosaic- open a mosaic of rasters
+     API for Mosaic- open a mosaic of rasters
 
     .. highlight:: python
     .. code-block:: python
@@ -514,10 +546,11 @@ def open_mosaic(rasters, **kwargs):
         from daskaic import open_mosaic
 
 
-        rasters = ['rasters_1.tif', 'raster_2.tif', 'raster_3.tif']
+        rasters = ['raster_1.tif', 'raster_2.tif', 'raster_3.tif']
         mosaic = open_mosaic(rasters)
 
     Alternatively, add some specs to the mosaic, using parameters specified in :class:`Mosaic`
+
     .. highlight:: python
     .. code-block:: python
 

@@ -7,6 +7,7 @@ class Raster(object):
     """
     Open a raster dataset to read specifications and access data as numpy arrays
     """
+
     def __init__(self, data):
         self.source = data
 
@@ -42,14 +43,14 @@ class Raster(object):
 
                 nd = band.GetNoDataValue()
                 if nd is None:
-                    self.nodata.append(np.nan)
+                    self.nodata.append(None)
                 else:
-                    self.nodata.append(nd)
+                    self.nodata.append(float(nd))
 
     @property
     @contextmanager
     def ds(self):
-        ds = gdal.Open(self.source)
+        ds = gdal.Open(self.source, 1)
         if ds is None:
             raise IOError(
                 'Unable to open data source "{}"'.format(self.source)
@@ -75,6 +76,51 @@ class Raster(object):
             a = ds.GetRasterBand(band).ReadAsArray(xoff=xoff, yoff=yoff, win_xsize=win_xsize, win_ysize=win_ysize)
         return a
 
+    @staticmethod
+    def _gdal_args_from_slice(s):
+        """
+        Collect the required parameters to insert data into a raster using GDAL
+
+        :param s: slice
+        :return:
+        """
+        if not hasattr(s, '__iter__'):
+            s = [s]
+        if len(s) > 3:
+            raise IndexError(
+                'Rasters slices cannot have more than 3 dimensions')
+
+        s = list(s)
+        s += [slice(None, None, None)] * (3 - len(s))
+
+        band = s[0].start or 0
+        yoff = s[1].start or 0
+        xoff = s[2].start or 0
+
+        return band + 1, xoff, yoff
+
+    def __setitem__(self, s, a):
+        band, xoff, yoff = self._gdal_args_from_slice(s)
+
+        if band > self.bands:
+            raise IndexError('Band {} out of range (raster has {} bands)'.format(band, self.bands))
+        if xoff + a.shape[2] > self.shape[2] or yoff + a.shape[1] > self.shape[1]:
+            raise IndexError(
+                'Array of shape {} offset by ({}, {})  exceeds the raster with shape {}'.format(
+                    a.shape, yoff, xoff, self.shape
+                )
+            )
+
+        if a.shape == (1, 1, 1):
+            write_data = np.empty(self.shape, self.dtype)
+            write_data.fill(np.squeeze(a))
+        else:
+            write_data = a
+
+        with self.ds as ds:
+            ds.GetRasterBand(band).WriteArray(np.squeeze(write_data), xoff=xoff, yoff=yoff)
+            ds.FlushCache()
+
 
 def open_raster(raster_path):
     """
@@ -88,4 +134,53 @@ def open_raster(raster_path):
         r = open_raster('raster_1.tif')
         numpy_array = r.read_as_array(1)
     """
+    return Raster(raster_path)
+
+
+def create_raster_source(raster_path, top, left, shape, csx, csy, sr, dtype, nodata, chunks):
+    """
+    Create a raster source at a specified path using the given spatial definition
+
+    :param float top: Top coordinate
+    :param float left: Left coordinate
+    :param tuple shape: Shape
+    :param float csx: Cell size in the x-direction
+    :param float csy: Cell size in the y-direction
+    :param str sr: Spatial Reference as a WKT
+    :param str dtype: Data type - in ``numpy.dtype`` form
+    :param number nodata: No Data value for each band
+    """
+    if raster_path.split('.')[-1].lower() == 'tif':
+        driver = gdal.GetDriverByName('GTiff')
+        dtype = 'Byte' if dtype in ['uint8', 'int8', 'bool'] else dtype
+        dtype = 'int32' if dtype == 'int64' else dtype
+        dtype = 'uint32' if dtype == 'uint64' else dtype
+        comp = 'COMPRESS=LZW'
+        if shape[1] > chunks['y'] and shape[2] > chunks['x']:
+            blockxsize = 'BLOCKXSIZE=%s' % chunks['x']
+            blockysize = 'BLOCKYSIZE=%s' % chunks['y']
+            tiled = 'TILED=YES'
+        else:
+            blockxsize, blockysize, tiled = 'BLOCKXSIZE=0', 'BLOCKYSIZE=0', 'TILED=NO'
+        creation_options = [tiled, blockysize, blockxsize, comp]
+        dst = driver.Create(raster_path,
+                            int(shape[2]),
+                            int(shape[1]),
+                            int(shape[0]),
+                            gdal.GetDataTypeByName(dtype),
+                            creation_options)
+    else:
+        dst = None
+
+    if dst is None:
+        raise IOError('Unable to save the file {}'.format(raster_path))
+
+    dst.SetProjection(sr)
+    dst.SetGeoTransform((left, csx, 0, top, 0, csy * -1))
+    for bi in range(int(shape[0])):
+        band = dst.GetRasterBand(bi + 1)
+        band.SetNoDataValue(nodata)
+        band = None
+    dst = None
+
     return Raster(raster_path)

@@ -122,22 +122,22 @@
 <dd><p>A collection of rasters with a single defined spatial reference and discretization</p>
 <p>Creating a mosaic requires an iterable of GDAL-supported raster data sources. The spatial definition of the
 mosaic will be inferred if no kwargs are provided.</p>
-<dl class="field-list simple">
+<dl class="field-list">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>path</strong> (<em>list</em>) – An iterable with paths to raster data</p>
 </dd>
 <dt class="field-even">Keyword Arguments</dt>
-<dd class="field-even"><dl class="simple">
+<dd class="field-even"><dl>
 <dt><strong>extent</strong> (<em>tuple</em>) – </dt><dd><p>Bounding extent of the mosaic in the target spatial reference. Order: (top, bottom, left, right)
 Defaults to <code class="docutils literal notranslate"><span class="pre">'union'</span></code>, which is the bounds of all input rasters</p>
 </dd>
-<dt><strong>chunks</strong> (<em>int</em> or <em>dict</em>) – </dt><dd><p>Chunks used for mapped data access by dask. Specify explictly using a dict in the form
-{‘bands’: &lt;number of bands&gt;, ‘x’: &lt;chunks in the x-direction&gt;, ‘y’: &lt;chunks in the y-direction&gt;}.
-Otherwise, specify a block size multiplier for the raster with the smallest block size. Defaults to <code class="docutils literal notranslate"><span class="pre">2</span></code>.</p>
+<dt><strong>chunks</strong> (<em>int</em> or <em>dict</em>) – </dt><dd><p>Chunks used for mapped data access by dask. Specify explictly using a dict in the form</p>
+<p><code class="docutils literal notranslate"><span class="pre">{'bands':</span> <span class="pre">&lt;number</span> <span class="pre">of</span> <span class="pre">bands&gt;,</span> <span class="pre">'x':</span> <span class="pre">&lt;chunks</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">x-direction&gt;,</span> <span class="pre">'y':</span> <span class="pre">&lt;chunks</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">y-direction&gt;}</span></code></p>
+<p>Otherwise, specify a block size multiplier for the raster with the smallest block size. Defaults to <code class="docutils literal notranslate"><span class="pre">8</span></code>.</p>
 </dd>
-<dt><strong>band_alignment</strong> (<em>str</em> or <em>dict</em>) – </dt><dd><p>Method to align, or reduce raster bands during data access. This may be a dict in the form:
-{1: [&lt;raster 1 band&gt;, &lt;raster 2 band&gt;], 2: [&lt;raster 1 band&gt;, &lt;raster 2 band&gt;]}, where the
-keys are the output bands (z-dimensions) when data are read, and the values are lists with exactly
+<dt><strong>band_alignment</strong> (<em>str</em> or <em>dict</em>) – </dt><dd><p>Method to align, or reduce raster bands during data access. This may be a dict in the form:</p>
+<p><code class="docutils literal notranslate"><span class="pre">{1:</span> <span class="pre">[&lt;raster</span> <span class="pre">1</span> <span class="pre">band&gt;,</span> <span class="pre">&lt;raster</span> <span class="pre">2</span> <span class="pre">band&gt;],</span> <span class="pre">2:</span> <span class="pre">[&lt;raster</span> <span class="pre">1</span> <span class="pre">band&gt;,</span> <span class="pre">&lt;raster</span> <span class="pre">2</span> <span class="pre">band&gt;]}</span></code></p>
+<p>where the keys are the output bands (z-dimensions) when data are read, and the values are lists with exactly
 the same length as the rasters in the mosaic with band numbers mapped in order.
 This argument may also be the value <code class="docutils literal notranslate"><span class="pre">'number'</span></code>, which means all band numbers from all rasters will
 align by index.</p>
@@ -173,6 +173,17 @@ Defaults to an inferred maximum or minimum possible value using the data type of
 </dd>
 </dl>
 <dl class="py method">
+<dt id="daskaic.Mosaic.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">raster_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#daskaic.Mosaic.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store the computed mosaic into a raster data target</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>raster_path</strong> (<em>str</em>) – Input path to a raster source.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="daskaic.Mosaic.slice">
 <code class="sig-name descname">slice</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">extent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#daskaic.Mosaic.slice" title="Permalink to this definition">¶</a></dt>
 <dd><p>Collect a dask array of an extent within the mosaic.</p>
@@ -191,25 +202,46 @@ snapped to a greater window matching the mosaic cell size.</p>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt id="daskaic.Mosaic.store">
+<code class="sig-name descname">store</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dask</span></em>, <em class="sig-param"><span class="n">raster_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#daskaic.Mosaic.store" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store a computed dask array into a new raster path. The format of the output raster will be interpreted by GDAL,
+although additional parameters will be implicitly added for a GeoTiff output to make it cloud optimized.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The dask should have been created using the same Mosaic instance that is used to store it. Also, 
+if the dask graph includes subsequent reductions or slicing, the dask may not fit the mosaic spatial
+definition.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dask</strong> (<em>dask.Array</em>) – Input dask array</p></li>
+<li><p><strong>raster_path</strong> (<em>str</em>) – Input path to a raster source.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py function">
 <dt id="daskaic.open_mosaic">
 <code class="sig-prename descclassname">daskaic.</code><code class="sig-name descname">open_mosaic</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rasters</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#daskaic.open_mosaic" title="Permalink to this definition">¶</a></dt>
-<dd><p>API for Mosaic- open a mosaic of rasters</p>
+<dd><blockquote>
+<div><p>API for Mosaic- open a mosaic of rasters</p>
+</div></blockquote>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">daskaic</span> <span class="kn">import</span> <span class="n">open_mosaic</span>
 
 
-<span class="n">rasters</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;rasters_1.tif&#39;</span><span class="p">,</span> <span class="s1">&#39;raster_2.tif&#39;</span><span class="p">,</span> <span class="s1">&#39;raster_3.tif&#39;</span><span class="p">]</span>
+<span class="n">rasters</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;raster_1.tif&#39;</span><span class="p">,</span> <span class="s1">&#39;raster_2.tif&#39;</span><span class="p">,</span> <span class="s1">&#39;raster_3.tif&#39;</span><span class="p">]</span>
 <span class="n">mosaic</span> <span class="o">=</span> <span class="n">open_mosaic</span><span class="p">(</span><span class="n">rasters</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Alternatively, add some specs to the mosaic, using parameters specified in <a class="reference internal" href="#daskaic.Mosaic" title="daskaic.Mosaic"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mosaic</span></code></a>
-.. highlight:: python
-.. code-block:: python</p>
-<blockquote>
-<div><p>mosaic = open_mosaic(rasters, sr=4326, merge_method=’average’, chunks={‘bands’: 1, ‘x’: 1024, ‘y’: 1024})</p>
-</div></blockquote>
+<p>Alternatively, add some specs to the mosaic, using parameters specified in <a class="reference internal" href="#daskaic.Mosaic" title="daskaic.Mosaic"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mosaic</span></code></a></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mosaic</span> <span class="o">=</span> <span class="n">open_mosaic</span><span class="p">(</span><span class="n">rasters</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">4326</span><span class="p">,</span> <span class="n">merge_method</span><span class="o">=</span><span class="s1">&#39;average&#39;</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;bands&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">})</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">

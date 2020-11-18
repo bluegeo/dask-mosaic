@@ -59,7 +59,7 @@ When no kwargs are used, the parameters are inferred. Defaults include:
 | kwarg            | Default Value | Description                                                                                                |
 | ---------------- | ------------- | ---------------------------------------------------------------------------------------------------------- |
 | `extent`         | `'union'`     | The processing extent. Defaults to the union of all rasters.                                               |
-| `chunks`         | `2`           | Chunks for computation. Defaults to 1 band and 2x the smallest chunk size of all rasters.                  |
+| `chunks`         | `8`           | Chunks for computation. Defaults to 1 band and 8x the smallest chunk size of all rasters.                  |
 | `band_alignment` | `'number'`    | Alignment of raster bands. Default is all band numbers align.                                              |
 | `dtype`          | `'highest'`   | Data type of extracted data. Defaults to the highest precision.                                            |
 | `resample_algs`  | `None`        | Resample methods for each raster. Defaults to `None`, where the alg. is guessed using the data type.       |
