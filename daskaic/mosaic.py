@@ -155,7 +155,7 @@ class Mosaic(object):
 
     def _populate_dimensions(self, extent, csx, csy):
         top, bottom, left, right = self._populate_extent(extent)
-        csx, csy = self._populate_cs(csx, csy)
+        csx, csy = self._populate_cs(csx, csy, (top, bottom, left, right))
         shape = (
             self.bands,
             int(np.ceil((top - bottom) / csy)),
@@ -227,7 +227,7 @@ class Mosaic(object):
         else:
             return np.dtype(data).name
 
-    def _populate_cs(self, csx, csy):
+    def _populate_cs(self, csx, csy, extent):
         ret = []
         for cs, val in [('csx', csx), ('csy', csy)]:
             try:
@@ -237,14 +237,14 @@ class Mosaic(object):
                 for rast in self.rasters:
                     # Convert the cell size to the target spatial reference
                     if not compare_projections(self.sr, rast.sr):
-                        top, bottom, left, right = transform_extent(self.extent, self.sr, rast.sr)
+                        top, bottom, left, right = transform_extent(extent, self.sr, rast.sr)
                         if cs == 'csy':
                             sizes.append(
-                                (self.extent[0] - self.extent[1]) / ((top - bottom) / rast.csy)
+                                (extent[0] - extent[1]) / ((top - bottom) / rast.csy)
                             )
                         else:
                             sizes.append(
-                                (self.extent[3] - self.extent[2]) / ((right - left) / rast.csx)
+                                (extent[3] - extent[2]) / ((right - left) / rast.csx)
                             )
                     else:
                         sizes.append(getattr(rast, cs))
