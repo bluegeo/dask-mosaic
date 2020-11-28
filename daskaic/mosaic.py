@@ -283,12 +283,16 @@ class Mosaic(object):
         else:
             return getattr(np, self.dtype)(data)
 
-    def _raster_data(self, raster, band_index, j_start, i_start, shape_i, shape_j, resample_alg, band_cache):
-        # Translate the slice to the raster dimensions
+    def _slice_to_extent(self, j_start, i_start, shape_i, shape_j):
         xmin = self.left + (j_start * self.csx)
         ymax = self.top - (i_start * self.csy)
         ymin = ymax - shape_i * self.csy
         xmax = xmin + shape_j * self.csx
+        return ymax, ymin, xmin, xmax
+
+    def _raster_data(self, raster, band_index, j_start, i_start, shape_i, shape_j, resample_alg, band_cache):
+        # Translate the slice to the raster dimensions
+        ymax, ymin, xmin, xmax = self._slice_to_extent(j_start, i_start, shape_i, shape_j)
 
         rast_ymax, rast_ymin, rast_xmin, rast_xmax = transform_extent((ymax, ymin, xmin, xmax), self.sr, raster.sr)
 
@@ -449,8 +453,11 @@ class Mosaic(object):
             all_bands.append(bands)
 
         for raster, bands, alg in zip(self.rasters, all_bands, self.resample_algs):
-            # First compare the extents
-            if not intersects(raster.extent, self.extent):
+            # Make sure the slice intersects the raster
+            if not intersects(
+                raster.extent,
+                transform_extent(self._slice_to_extent(j_start, i_start, shape[1], shape[2]), self.sr, raster.sr)
+            ):
                 continue
 
             band_cache = {band + 1: None for band in bands}
