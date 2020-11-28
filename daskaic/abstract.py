@@ -1,3 +1,4 @@
+import os
 from contextlib import contextmanager
 import numpy as np
 from osgeo import gdal
@@ -10,6 +11,11 @@ class Raster(object):
 
     def __init__(self, data):
         self.source = data
+
+        # Remote data cannot be opened in 'w' mode, assert whether data are local
+        self.remote = True
+        if os.path.isfile(data) or os.path.isdir(data):
+            self.remote = False
 
         with self.ds as ds:
             sr = ds.GetProjectionRef()
@@ -50,7 +56,11 @@ class Raster(object):
     @property
     @contextmanager
     def ds(self):
-        ds = gdal.Open(self.source, 1)
+        if self.remote:
+            ds = gdal.Open(self.source)
+        else:
+            ds = gdal.Open(self.source, 1)
+        
         if ds is None:
             raise IOError(
                 'Unable to open data source "{}"'.format(self.source)

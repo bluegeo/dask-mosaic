@@ -1,3 +1,4 @@
+from copy import deepcopy
 import numpy as np
 import dask.array as da
 from osgeo import gdal
@@ -79,7 +80,6 @@ class Mosaic(object):
             raise ValueError('A Mosaic requires one or more rasters')
 
         self.rasters = [Raster(raster) for raster in rasters]
-
         #
         # Populate mosaic specifications
         #
@@ -92,21 +92,13 @@ class Mosaic(object):
 
         # Spatial reference
         self.sr = self._populate_sr(kwargs.get('sr', 'first'))
-        self.top, self.bottom, self.left, self.right = self._populate_extent(kwargs.get('extent', 'union'))
-        self.csx, self.csy = self._populate_cs(kwargs.get('csx', 'smallest'), kwargs.get('csy', 'smallest'))
-        self.shape = (
-            self.bands,
-            int(np.ceil((self.top - self.bottom) / self.csy)),
-            int(np.ceil((self.right - self.left) / self.csx))
+        
+        # Dimensions
+        self.top, self.bottom, self.left, self.right, self.csx, self.csy, self.shape = self._populate_dimensions(
+            kwargs.get('extent', 'union'),
+            kwargs.get('csx', 'smallest'),
+            kwargs.get('csy', 'smallest')
         )
-
-        # Check for valid discretization
-        if any([s < 1 for s in self.shape]):
-            raise ValueError('A negative or zero-dimension mosaic resulted from the specified extent and cell size')
-
-        # Adjust the extent using the input cell size
-        self.bottom = self.top - (self.shape[1] * self.csy)
-        self.right = self.left + (self.shape[2] * self.csx)
 
         # Data specifications
         self.dtype = self._populate_dtype(kwargs.get('dtype', 'highest'))
@@ -160,6 +152,25 @@ class Mosaic(object):
             return self.rasters[-1].sr
         else:
             return get_user_sr(data)
+
+    def _populate_dimensions(self, extent, csx, csy):
+        top, bottom, left, right = self._populate_extent(extent)
+        csx, csy = self._populate_cs(csx, csy)
+        shape = (
+            self.bands,
+            int(np.ceil((top - bottom) / csy)),
+            int(np.ceil((right - left) / csx))
+        )
+
+        # Check for valid discretization
+        if any([s < 1 for s in shape]):
+            raise ValueError('A negative or zero-dimension mosaic resulted from the specified extent and cell size')
+
+        # Adjust the extent using the input cell size
+        bottom = top - (shape[1] * csy)
+        right = left + (shape[2] * csx)
+
+        return top, bottom, left, right, csx, csy, shape
 
     def _populate_extent(self, data):
         if data == 'union':
@@ -438,6 +449,10 @@ class Mosaic(object):
             all_bands.append(bands)
 
         for raster, bands, alg in zip(self.rasters, all_bands, self.resample_algs):
+            # First compare the extents
+            if not intersects(raster.extent, self.extent):
+                continue
+
             band_cache = {band + 1: None for band in bands}
             for band in bands:
                 band_index = band + 1
@@ -472,21 +487,10 @@ class Mosaic(object):
 
         return output
 
-    def slice(self, extent):
-        """
-        Collect a dask array of an extent within the mosaic.
-
-        .. Note::
-            If the extent does not line up with the cell edges exactly, the extent of resulting data are 
-            snapped to a greater window matching the mosaic cell size.
-
-        :param tuple extent: Extent coordinates in the form (top, bottom, left, right)
-        :return: Dask array of sliced data from the mosaic
-        """
+    def _check_bounds(self, extent):
         top, bottom, left, right = extent
         if top <= bottom or right <= left:
             raise ValueError('Cannot slice with negative or zero dimensions')
-
         if top > self.top:
             raise IndexError('Top of extent exceeds mosaic boundary')
         if left < self.left:
@@ -495,6 +499,23 @@ class Mosaic(object):
             raise IndexError('Right of extent exceeds mosaic boundary')
         if bottom < self.bottom:
             raise IndexError('Bottom of extent exceeds mosaic boundary')
+
+    def slice(self, extent, extent_sr=None):
+        """
+        Collect a dask array of an extent within the mosaic.
+
+        .. Note::
+            If the extent does not line up with the cell edges exactly, the extent of resulting data are 
+            snapped to a greater window matching the mosaic cell size.
+
+        :param tuple extent: Extent coordinates in the form (top, bottom, left, right)
+        :param multiple extent_sr: Spatial reference of the provided extent
+        :return: Dask array of sliced data from the mosaic
+        """
+        if extent_sr is not None:
+            extent = transform_extent(extent, self.sr, extent_sr)
+        self._check_bounds(extent)
+        top, bottom, left, right = extent
 
         i_fr = int(np.floor((self.top - top) / self.csy))
         i_to = int(np.ceil((self.top - bottom) / self.csy))
@@ -508,6 +529,31 @@ class Mosaic(object):
             )[i_fr:i_to, j_fr:j_to],
             self.nodata
         )
+
+    def _copy(self):
+        """
+        Create a copy of the Mosaic instance
+
+        :return: New Mosaic instance
+        """
+        return deepcopy(self)
+
+    def clip(self, extent, extent_sr=None):
+        """
+        Clip the mosaic to a smaller extent
+
+        :param tuple extent: Extent coordinates in the form (top, bottom, left, right)
+        :param multiple extent_sr: Spatial reference of the provided extent
+        :return: Mosaic instance within the clipped extent
+        """
+        if extent_sr is not None:
+            extent = transform_extent(extent, self.sr, extent_sr)
+        self._check_bounds(extent)
+
+        clipped_mosaic = self._copy()
+        clipped_mosaic._populate_dimensions(extent, self.csx, self.csy)
+
+        return clipped_mosaic
 
     def store(self, dask, raster_path):
         """
