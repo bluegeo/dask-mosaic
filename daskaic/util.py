@@ -13,13 +13,16 @@ def transform_extent(extent, in_sr, out_sr):
     outsr.ImportFromWkt(get_user_sr(out_sr))
 
     # Ensure resulting axes are still in the order x, y
+    insr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     outsr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
     coordTransform = osr.CoordinateTransformation(insr, outsr)
-    left, top = coordTransform.TransformPoint(extent[2], extent[0])[:2]
-    right, bottom = coordTransform.TransformPoint(extent[3], extent[1])[:2]
+    left_1, top_1 = coordTransform.TransformPoint(extent[2], extent[0])[:2]
+    right_1, top_2 = coordTransform.TransformPoint(extent[3], extent[0])[:2]
+    right_2, bottom_1 = coordTransform.TransformPoint(extent[3], extent[1])[:2]
+    left_2, bottom_2 = coordTransform.TransformPoint(extent[2], extent[1])[:2]
 
-    coords = (top, bottom, left, right)
+    coords = (max(top_1, top_2), min(bottom_1, bottom_2), min(left_1, left_2), max(right_1, right_2))
     if any([np.isinf(c) or np.isnan(c) for c in coords]):
         raise ValueError('Extent out of bounds for target spatial reference. Try a different mosaic extent.')
 
