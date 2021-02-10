@@ -19,10 +19,12 @@ functionality of `rasterio`, then openend using `xarray` to yield a dask array. 
 rectangular and could take a large amount of storage and time to create. If the alignment of rasters was also done
 lazily, this step may be skipped.
 
-_When should this library be used?_
+This library is exploratory and meant to be used personally because of its ease of use, although it is not in a state where it should be used in a production environment.
 
-Where a number of rasters have similar resolutions and spatial references, the merging of data for extraction of smaller
-blocks will be performant. Otherwise, where large blocks/chunks may be used, this library will still be beneficial.
+_When is this library beneficial?_
+
+* When rasters have mostly similar resolutions and spatial references and memory management is an issue
+* When large blocks/chunks may be used
 
 _When should this not be used?_
 

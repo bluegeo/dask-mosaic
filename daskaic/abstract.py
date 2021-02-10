@@ -60,7 +60,7 @@ class Raster(object):
             ds = gdal.Open(self.source)
         else:
             ds = gdal.Open(self.source, 1)
-        
+
         if ds is None:
             raise IOError(
                 'Unable to open data source "{}"'.format(self.source)
@@ -82,8 +82,10 @@ class Raster(object):
         :param int win_xsize: Shape of the extracted data block in the x-direction
         :param int win_ysize: Shape of the extracted data block in the y-direction
         """
+        # TODO: Avoid re-reading header for every chunk
         with self.ds as ds:
-            a = ds.GetRasterBand(band).ReadAsArray(xoff=xoff, yoff=yoff, win_xsize=win_xsize, win_ysize=win_ysize)
+            a = ds.GetRasterBand(band).ReadAsArray(
+                xoff=xoff, yoff=yoff, win_xsize=win_xsize, win_ysize=win_ysize)
         return a
 
     @staticmethod
@@ -113,7 +115,8 @@ class Raster(object):
         band, xoff, yoff = self._gdal_args_from_slice(s)
 
         if band > self.bands:
-            raise IndexError('Band {} out of range (raster has {} bands)'.format(band, self.bands))
+            raise IndexError(
+                'Band {} out of range (raster has {} bands)'.format(band, self.bands))
         if xoff + a.shape[2] > self.shape[2] or yoff + a.shape[1] > self.shape[1]:
             raise IndexError(
                 'Array of shape {} offset by ({}, {})  exceeds the raster with shape {}'.format(
@@ -145,7 +148,7 @@ def open_raster(raster_path):
     return Raster(raster_path)
 
 
-def create_raster_source(raster_path, top, left, shape, csx, csy, sr, dtype, nodata, chunks):
+def create_raster_source(raster_path, top, left, shape, csx, csy, sr, dtype, nodata, chunks, **kwargs):
     """
     Create a raster source at a specified path using the given spatial definition
 
@@ -157,26 +160,49 @@ def create_raster_source(raster_path, top, left, shape, csx, csy, sr, dtype, nod
     :param str sr: Spatial Reference as a WKT
     :param str dtype: Data type - in ``numpy.dtype`` form
     :param number nodata: No Data value for each band
+
+    :param kwargs: Used for additional creation options, ex. { 'BIGTIFF': 'YES' }
     """
     if raster_path.split('.')[-1].lower() == 'tif':
         driver = gdal.GetDriverByName('GTiff')
         dtype = 'Byte' if dtype in ['uint8', 'int8', 'bool'] else dtype
         dtype = 'int32' if dtype == 'int64' else dtype
         dtype = 'uint32' if dtype == 'uint64' else dtype
-        comp = 'COMPRESS=LZW'
+
+        # Blocks
+        block_x_size = kwargs.get('block_x_size', 512)
+        block_y_size = kwargs.get('block_y_size', 512)
         if shape[1] > chunks['y'] and shape[2] > chunks['x']:
-            blockxsize = 'BLOCKXSIZE=%s' % chunks['x']
-            blockysize = 'BLOCKYSIZE=%s' % chunks['y']
+            blockxsize = 'BLOCKXSIZE=%s' % block_x_size
+            blockysize = 'BLOCKYSIZE=%s' % block_y_size
             tiled = 'TILED=YES'
         else:
             blockxsize, blockysize, tiled = 'BLOCKXSIZE=0', 'BLOCKYSIZE=0', 'TILED=NO'
-        creation_options = [tiled, blockysize, blockxsize, comp]
-        dst = driver.Create(raster_path,
-                            int(shape[2]),
-                            int(shape[1]),
-                            int(shape[0]),
-                            gdal.GetDataTypeByName(dtype),
-                            creation_options)
+
+        # Predictor for compression
+        if 'float' in dtype:
+            predictor = 'PREDICTOR=3'
+        else:
+            predictor = 'PREDICTOR=2'
+
+        additional_opts = [f'{key}={val}' for key, val in kwargs.items()]
+
+        creation_options = [
+            tiled,
+            blockysize,
+            blockxsize,
+            predictor,
+            'COMPRESS=LZW',
+            'COPY_SRC_OVERVIEWS=YES',
+        ] + additional_opts
+        dst = driver.Create(
+            raster_path,
+            int(shape[2]),
+            int(shape[1]),
+            int(shape[0]),
+            gdal.GetDataTypeByName(dtype),
+            creation_options
+        )
     else:
         dst = None
 

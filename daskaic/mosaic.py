@@ -1,4 +1,5 @@
 from copy import deepcopy
+import subprocess
 import numpy as np
 import dask.array as da
 from osgeo import gdal
@@ -84,15 +85,18 @@ class Mosaic(object):
         # Populate mosaic specifications
         #
         # Read options
-        self.band_alignment = self._populate_band_alignment(kwargs.get('band_alignment', 'number'))
-        self.resample_algs = self._populate_resample_algs(kwargs.get('resample_algs', None))
+        self.band_alignment = self._populate_band_alignment(
+            kwargs.get('band_alignment', 'number'))
+        self.resample_algs = self._populate_resample_algs(
+            kwargs.get('resample_algs', None))
         self.merge_method = kwargs.get('merge_method', 'last').lower()
         if self.merge_method not in self.merge_methods:
-            raise ValueError('Merge method must be one of those specified in Mosaic.merge_methods')
+            raise ValueError(
+                'Merge method must be one of those specified in Mosaic.merge_methods')
 
         # Spatial reference
         self.sr = self._populate_sr(kwargs.get('sr', 'first'))
-        
+
         # Dimensions
         self.top, self.bottom, self.left, self.right, self.csx, self.csy, self.shape = self._populate_dimensions(
             kwargs.get('extent', 'union'),
@@ -132,16 +136,19 @@ class Mosaic(object):
         Return the dask array of the mosaic
         """
         return da.ma.masked_equal(
-            da.from_array(self, chunks=(self.chunks['bands'], self.chunks['y'], self.chunks['x'])),
+            da.from_array(self, chunks=(
+                self.chunks['bands'], self.chunks['y'], self.chunks['x'])),
             self.nodata
         )
 
     def _populate_band_alignment(self, data):
         if isinstance(data, dict):
             if any([len(vals) != len(self.rasters) for _, vals in data.items()]):
-                raise ValueError('Band alignment numbers must match number of rasters in the mosaic')
+                raise ValueError(
+                    'Band alignment numbers must match number of rasters in the mosaic')
         elif data.lower() != 'number':
-            raise ValueError('Band alignment must be a correlation dict or the value "number"')
+            raise ValueError(
+                'Band alignment must be a correlation dict or the value "number"')
         else:
             return data.lower()
 
@@ -164,7 +171,8 @@ class Mosaic(object):
 
         # Check for valid discretization
         if any([s < 1 for s in shape]):
-            raise ValueError('A negative or zero-dimension mosaic resulted from the specified extent and cell size')
+            raise ValueError(
+                'A negative or zero-dimension mosaic resulted from the specified extent and cell size')
 
         # Adjust the extent using the input cell size
         bottom = top - (shape[1] * csy)
@@ -174,19 +182,23 @@ class Mosaic(object):
 
     def _populate_extent(self, data):
         if data == 'union':
-            top, bottom, left, right = transform_extent(self.rasters[0].extent, self.rasters[0].sr, self.sr)
+            top, bottom, left, right = transform_extent(
+                self.rasters[0].extent, self.rasters[0].sr, self.sr)
             for rast in self.rasters[1:]:
-                next_top, next_bottom, next_left, next_right = transform_extent(rast.extent, rast.sr, self.sr)
+                next_top, next_bottom, next_left, next_right = transform_extent(
+                    rast.extent, rast.sr, self.sr)
                 top = max(next_top, top)
                 bottom = min(next_bottom, bottom)
                 left = min(next_left, left)
                 right = max(next_right, right)
 
         elif data == 'first':
-            top, bottom, left, right = transform_extent(self.rasters[0].extent, self.rasters[0].sr, self.sr)
+            top, bottom, left, right = transform_extent(
+                self.rasters[0].extent, self.rasters[0].sr, self.sr)
 
         elif data == 'last':
-            top, bottom, left, right = transform_extent(self.rasters[-1].extent, self.rasters[-1].sr, self.sr)
+            top, bottom, left, right = transform_extent(
+                self.rasters[-1].extent, self.rasters[-1].sr, self.sr)
 
         else:
             try:
@@ -209,6 +221,7 @@ class Mosaic(object):
                 x = min(chunk[0], x)
                 y = min(chunk[1], y)
 
+        # TODO: When auto-creating chunks, use a row-favoured approach to optimize GDAL reads
         x = max(256, min(x * data, self.shape[2]))
         y = max(256, min(y * data, self.shape[1]))
 
@@ -237,14 +250,17 @@ class Mosaic(object):
                 for rast in self.rasters:
                     # Convert the cell size to the target spatial reference
                     if not compare_projections(self.sr, rast.sr):
-                        top, bottom, left, right = transform_extent(extent, self.sr, rast.sr)
+                        top, bottom, left, right = transform_extent(
+                            extent, self.sr, rast.sr)
                         if cs == 'csy':
                             sizes.append(
-                                (extent[0] - extent[1]) / ((top - bottom) / rast.csy)
+                                (extent[0] - extent[1]) /
+                                ((top - bottom) / rast.csy)
                             )
                         else:
                             sizes.append(
-                                (extent[3] - extent[2]) / ((right - left) / rast.csx)
+                                (extent[3] - extent[2]) /
+                                ((right - left) / rast.csx)
                             )
                     else:
                         sizes.append(getattr(rast, cs))
@@ -256,7 +272,8 @@ class Mosaic(object):
                 elif val == 'average':
                     ret.append(sum(sizes) / len(sizes))
                 else:
-                    raise ValueError('Unrecognized {} input: "{}"'.format(cs, val))
+                    raise ValueError(
+                        'Unrecognized {} input: "{}"'.format(cs, val))
 
         return ret
 
@@ -265,9 +282,11 @@ class Mosaic(object):
             return ['bilinear' if any(['float' in dt for dt in rast.dtypes]) else 'near' for rast in self.rasters]
         else:
             if len(algs) < len(self.rasters):
-                raise ValueError('Number of resampling algorithms must match the number of input rasters')
+                raise ValueError(
+                    'Number of resampling algorithms must match the number of input rasters')
             if any([alg not in self.gdal_resample_methods for alg in algs]):
-                raise ValueError('Resample methods must be one of those included in Mosaic.gdal_resample_methods')
+                raise ValueError(
+                    'Resample methods must be one of those included in Mosaic.gdal_resample_methods')
             return algs
 
     def _populate_nodata(self, data):
@@ -292,9 +311,11 @@ class Mosaic(object):
 
     def _raster_data(self, raster, band_index, j_start, i_start, shape_i, shape_j, resample_alg, band_cache):
         # Translate the slice to the raster dimensions
-        ymax, ymin, xmin, xmax = self._slice_to_extent(j_start, i_start, shape_i, shape_j)
+        ymax, ymin, xmin, xmax = self._slice_to_extent(
+            j_start, i_start, shape_i, shape_j)
 
-        rast_ymax, rast_ymin, rast_xmin, rast_xmax = transform_extent((ymax, ymin, xmin, xmax), self.sr, raster.sr)
+        rast_ymax, rast_ymin, rast_xmin, rast_xmax = transform_extent(
+            (ymax, ymin, xmin, xmax), self.sr, raster.sr)
 
         # If the band index does not exist, or the extents do not intersect, return no data
         if band_index > raster.bands or not intersects((rast_ymax, rast_ymin, rast_xmin, rast_xmax), raster.extent):
@@ -326,7 +347,8 @@ class Mosaic(object):
             e_i_shape = min(shape_i, e_i_shape)
             e_j_shape = min(shape_j, e_j_shape)
 
-            a = np.full((shape_i, shape_j), raster.nodata[band_index - 1], raster.dtypes[band_index - 1])
+            a = np.full(
+                (shape_i, shape_j), raster.nodata[band_index - 1], raster.dtypes[band_index - 1])
             a[i_start:i_start + e_i_shape, j_start:j_start + e_j_shape] = raster.read_as_array(
                 band_index, e_j, e_i, e_j_shape, e_i_shape
             )
@@ -417,19 +439,23 @@ class Mosaic(object):
             # Dask calls with empty slices when using from_array
             return np.array([]).reshape((0, 0, 0))
 
-        b_start, b_stop, i_start, i_stop, j_start, j_stop = self._parse_slice(s)
+        b_start, b_stop, i_start, i_stop, j_start, j_stop = self._parse_slice(
+            s)
 
         if b_start > self.bands - 1:
             raise IndexError(
-                'Band {} out of bounds for band count {}'.format(b_start, self.bands)
+                'Band {} out of bounds for band count {}'.format(
+                    b_start, self.bands)
             )
         if i_start > self.shape[1] - 1:
             raise IndexError(
-                'Index {} out of bounds for axis 0 with shape {}'.format(i_start, self.shape[1])
+                'Index {} out of bounds for axis 0 with shape {}'.format(
+                    i_start, self.shape[1])
             )
         if j_start > self.shape[2] - 1:
             raise IndexError(
-                'Index {} out of bounds for axis 1 with shape {}'.format(j_start, self.shape[2])
+                'Index {} out of bounds for axis 1 with shape {}'.format(
+                    j_start, self.shape[2])
             )
 
         # Allocate output array
@@ -456,7 +482,8 @@ class Mosaic(object):
             # Make sure the slice intersects the raster
             if not intersects(
                 raster.extent,
-                transform_extent(self._slice_to_extent(j_start, i_start, shape[1], shape[2]), self.sr, raster.sr)
+                transform_extent(self._slice_to_extent(
+                    j_start, i_start, shape[1], shape[2]), self.sr, raster.sr)
             ):
                 continue
 
@@ -484,10 +511,12 @@ class Mosaic(object):
                         output[band, ...][m] += a[m]
                     elif self.merge_method == 'min':
                         m = (output[band, ...] != self.nodata) & in_mask
-                        output[band, ...][m] = np.minimum(output[band, ...][m], a[m])
+                        output[band, ...][m] = np.minimum(
+                            output[band, ...][m], a[m])
                     elif self.merge_method == 'max':
                         m = (output[band, ...] != self.nodata) & in_mask
-                        output[band, ...][m] = np.maximum(output[band, ...][m], a[m])
+                        output[band, ...][m] = np.maximum(
+                            output[band, ...][m], a[m])
 
         if self.merge_method == 'average':
             output = np.where(modals > 0, output / modals, self.nodata)
@@ -532,7 +561,8 @@ class Mosaic(object):
         return da.ma.masked_equal(
             da.from_array(
                 self,
-                chunks=(self.chunks['bands'], self.chunks['y'], self.chunks['x'])
+                chunks=(self.chunks['bands'],
+                        self.chunks['y'], self.chunks['x'])
             )[i_fr:i_to, j_fr:j_to],
             self.nodata
         )
@@ -562,7 +592,7 @@ class Mosaic(object):
 
         return clipped_mosaic
 
-    def store(self, dask, raster_path):
+    def store(self, dask, raster_path, **kwargs):
         """
         Store a computed dask array into a new raster path. The format of the output raster will be interpreted by GDAL,
         although additional parameters will be implicitly added for a GeoTiff output to make it cloud optimized.
@@ -574,13 +604,20 @@ class Mosaic(object):
 
         :param dask.Array dask: Input dask array
         :param str raster_path: Input path to a raster source.
+
+        :param kwargs: Used for additional creation options, ex. { 'BIGTIFF': 'YES' }
         """
         raster = create_raster_source(
             raster_path, self.top, self.left, self.shape, self.csx, self.csy, self.sr, self.dtype, self.nodata,
-            self.chunks
+            self.chunks, **kwargs
         )
 
         da.store([dask.reshape(self.shape).rechunk(self.chunk_tuple)], [raster])
+
+        # Create internal overviews
+        overview_resampling_method = kwargs.get('overview_resampling_method', 'nearest')
+        cmd = f'gdaladdo -r {overview_resampling_method} "{raster_path}"'
+        subprocess.call(cmd, shell=True)
 
     def save(self, raster_path):
         """
@@ -588,7 +625,8 @@ class Mosaic(object):
 
         :param str raster_path: Input path to a raster source.
         """
-        dask = da.from_array(self, chunks=(self.chunks['bands'], self.chunks['y'], self.chunks['x']))
+        dask = da.from_array(self, chunks=(
+            self.chunks['bands'], self.chunks['y'], self.chunks['x']))
         self.store(dask, raster_path)
 
     def __repr__(self):
